@@ -20,9 +20,11 @@ usage="Usage: app [dev|prod] [db|run|runs|debug|test|env|freeze|refreeze|build|d
 
 Select Environment:
 	dev        Development environment
+	test       Test environment
 	prod       Production environment
-	
+
 Run one or more commands:	
+	unlock     Removes mongo database lock file
 	db         Restart mongo database
 	run        Run app.js
 	runs       Run app.js in supervised. Restarts app if files change in ... 
@@ -30,7 +32,7 @@ Run one or more commands:
 	debug      Run app.js in debugger (non supervised)
 	data       Runs fixtures.js to install test fixtures in database
 	data-debug Runs fixtures.js in debugger
-	test       Run mocka tests
+	mock       Run mocha tests
 	env		   Display server environment (if enabled) paginated output to 'less'
 	freeze     Freeze npm package versions
 	refreeze   Reapply freeze and report version changes (can undo)
@@ -42,7 +44,8 @@ Run one or more commands:
 
 # Development environment is default
 env=development
-mongo="mongod -v --config mongo-dev.config --rest"
+#mongo="mongod -v --config mongo-dev.config --rest"
+mongo="mongod --config mongo-dev.config --rest"
 client_url="http://localhost:9001"
 app_dir=`pwd`
 mongodir=db-dev
@@ -59,16 +62,30 @@ do
 		help) echo "$usage" ;;
 		
 		dev)
-			# Development settings (set by default above)
+			# Development environment (set by default above)
+			;;
+		
+		test)
+			# Test environment
+			# - Not yet implemented in app.js - so we use dev for now
+			#env=test
+			#mongo="mongod --config mongo-test.config --rest"
+			#mongodir=db-test
+			
+			client_url="http://localhost:9001/test/"
 			;;
 			
 		prod)
-			# Production settings
+			# Production environment
 			env=production
 			mongo="mongod --config mongo-prod.config --rest"
 			mongodir=db-prod
 			client_url="http://localhost:9000"
 			app_dir="$DEPLOY_DIR"
+			;;
+
+		unlock)
+			rm -f "$mongodir/mongod.lock"
 			;;
 
 		db) 
@@ -124,7 +141,7 @@ do
 			node --debug-brk load_fixtures.js
 			;;
 
-		test)
+		mock)
 			# http://visionmedia.github.com/mocha/
 			# Requires: npm install -g mocha
 			# Add to test/mocha.opts
